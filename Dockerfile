@@ -8,11 +8,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar FFmpeg estático
-RUN wget -O /tmp/ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/builds/ffmpeg-release-amd64-static.tar.xz \
+RUN wget -O /tmp/ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz \
     && mkdir -p /opt/ffmpeg \
     && tar -xf /tmp/ffmpeg.tar.xz -C /opt/ffmpeg --strip-components=1 \
-    && ln -s /opt/ffmpeg/ffmpeg /usr/local/bin/ffmpeg \
-    && ln -s /opt/ffmpeg/ffprobe /usr/local/bin/ffprobe \
+    && ln -s /opt/ffmpeg/bin/ffmpeg /usr/local/bin/ffmpeg \
+    && ln -s /opt/ffmpeg/bin/ffprobe /usr/local/bin/ffprobe \
     && rm /tmp/ffmpeg.tar.xz
 
 # Instalar dependencias de Puppeteer/Chromium
