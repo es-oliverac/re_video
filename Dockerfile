@@ -5,6 +5,7 @@ FROM node:20-bullseye-slim AS base
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar FFmpeg estático
