@@ -114,6 +114,18 @@ RUN mkdir -p /app/node_modules/@ffprobe-installer/linux-x64 \
     && echo '{"name":"@ffprobe-installer/linux-x64","version":"2.1.0","main":"index.js","os":["linux"],"cpu":["x64"]}' > /app/node_modules/@ffprobe-installer/linux-x64/package.json \
     && echo 'module.exports = require("path").join(__dirname, "ffprobe");' > /app/node_modules/@ffprobe-installer/linux-x64/index.js
 
+# Parchear package.json de @revideo/2d con exports
+RUN node -e " \
+  const pkg = require('/app/packages/2d/package.json'); \
+  pkg.exports = { \
+    '.': { 'import': './lib/index.js', 'require': './lib/index.js', 'default': './lib/index.js' }, \
+    './jsx-runtime': { 'import': './lib/jsx-runtime.js', 'require': './lib/jsx-runtime.js', 'default': './lib/jsx-runtime.js' }, \
+    './jsx-dev-runtime': { 'import': './lib/jsx-dev-runtime.js', 'require': './lib/jsx-dev-runtime.js', 'default': './lib/jsx-dev-runtime.js' }, \
+    './*': { 'import': './lib/*.js', 'require': './lib/*.js' } \
+  }; \
+  require('fs').writeFileSync('/app/packages/2d/package.json', JSON.stringify(pkg, null, 2)); \
+"
+
 # Crear jsx-runtime export para @revideo/2d
 RUN if [ -f /app/packages/2d/lib/jsx-runtime.js ]; then \
       echo "jsx-runtime already compiled"; \
@@ -139,4 +151,4 @@ ENV CHROMIUM_FLAGS="--no-sandbox --disable-setuid-sandbox"
 ENV DISABLE_TELEMETRY=true
 
 # Iniciar servidor
-CMD ["sh", "-c", "ls -la /app/packages/2d/lib/ | head -20 && echo '---' && ls /app/packages/2d/lib/jsx-runtime* 2>&1 && echo '---DONE---'"]
+CMD ["node", "packages/cli/dist/index.js", "serve", "--projectFile", "/app/projects/default/src/project.ts", "--port", "4000"]
