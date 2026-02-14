@@ -1,0 +1,9 @@
+{
+  "name": "revideo-default-project",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@revideo/2d": "^0.10.4",
+    "@revideo/core": "^0.10.4"
+  }
+}

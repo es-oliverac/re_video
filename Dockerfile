@@ -95,6 +95,10 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/lerna.json ./
 
+# Symlinks para que el proyecto resuelva los paquetes del monorepo
+RUN ln -sf /app/packages/2d /app/node_modules/@revideo/2d \
+    && ln -sf /app/packages/core /app/node_modules/@revideo/core
+
 # Crear ffmpeg binary para @ffmpeg-installer DESPUÉS de copiar node_modules
 RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && rm -f /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
