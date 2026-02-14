@@ -101,7 +101,8 @@ COPY --from=builder /app/lerna.json ./
 
 # Symlink para @ffmpeg-installer (después de copiar node_modules del builder)
 RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
-    && cp /usr/local/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
+    && rm -f /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
+    && cp /opt/ffmpeg/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
     && chmod +x /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
 
 # Crear directorios necesarios
