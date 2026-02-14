@@ -114,6 +114,15 @@ RUN mkdir -p /app/node_modules/@ffprobe-installer/linux-x64 \
     && echo '{"name":"@ffprobe-installer/linux-x64","version":"2.1.0","main":"index.js","os":["linux"],"cpu":["x64"]}' > /app/node_modules/@ffprobe-installer/linux-x64/package.json \
     && echo 'module.exports = require("path").join(__dirname, "ffprobe");' > /app/node_modules/@ffprobe-installer/linux-x64/index.js
 
+# Crear jsx-runtime export para @revideo/2d
+RUN if [ -f /app/packages/2d/lib/jsx-runtime.js ]; then \
+      echo "jsx-runtime already compiled"; \
+    else \
+      echo "jsx-runtime not found in lib, checking src..."; \
+      ls -la /app/packages/2d/lib/ 2>/dev/null || echo "lib/ does not exist"; \
+      ls -la /app/packages/2d/src/lib/jsx-runtime* 2>/dev/null || echo "src jsx-runtime not found"; \
+    fi
+
 # Crear directorios necesarios
 RUN mkdir -p /app/projects /app/output
 
@@ -130,4 +139,4 @@ ENV CHROMIUM_FLAGS="--no-sandbox --disable-setuid-sandbox"
 ENV DISABLE_TELEMETRY=true
 
 # Iniciar servidor
-CMD ["node", "packages/cli/dist/index.js", "serve", "--projectFile", "/app/projects/default/src/project.ts", "--port", "4000"]
+CMD ["sh", "-c", "ls -la /app/packages/2d/lib/ | head -20 && echo '---' && ls /app/packages/2d/lib/jsx-runtime* 2>&1 && echo '---DONE---'"]
