@@ -1,0 +1,103 @@
+{
+  "name": "Revideo Video Rendering API",
+  "version": "1.0.0",
+  "description": "Servidor API para renderizado de videos programáticos con Revideo. Soporta múltiples proyectos y renderizado paralelo.",
+  "repository": "https://github.com/havenhq/revideo",
+  "website": "https://re.video",
+  "ports": {
+    "main": 4000,
+    "description": "Puerto del servidor HTTP API"
+  },
+  "volumes": {
+    "projects": {
+      "path": "/app/projects",
+      "description": "Directorio con proyectos de video (project.ts files)"
+    },
+    "output": {
+      "path": "/app/output",
+      "description": "Directorio donde se guardan los videos renderizados"
+    }
+  },
+  "env_variables": {
+    "REVIDEO_PORT": {
+      "description": "Puerto del servidor HTTP",
+      "default": 4000,
+      "type": "number"
+    },
+    "WORKERS": {
+      "description": "Número de workers paralelos para renderizado (recomendado: 4-16)",
+      "default": 8,
+      "type": "number",
+      "min": 1,
+      "max": 16
+    },
+    "PROJECTS_DIR": {
+      "description": "Directorio donde se almacenan los proyectos",
+      "default": "/app/projects",
+      "type": "string"
+    },
+    "CPU_LIMIT": {
+      "description": "Límite de CPU (número de cores)",
+      "default": 4,
+      "type": "number",
+      "min": 1
+    },
+    "CPU_RESERVATION": {
+      "description": "Reservación de CPU garantizada",
+      "default": 2,
+      "type": "number",
+      "min": 1
+    },
+    "MEMORY_LIMIT": {
+      "description": "Límite de memoria (ej: 4G, 8G, 16G)",
+      "default": "8G",
+      "type": "string"
+    },
+    "MEMORY_RESERVATION": {
+      "description": "Reservación de memoria garantizada",
+      "default": "4G",
+      "type": "string"
+    },
+    "DISABLE_TELEMETRY": {
+      "description": "Deshabilitar telemetría anónima de PostHog",
+      "default": true,
+      "type": "boolean"
+    }
+  },
+  "health_check": {
+    "path": "/render",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 3
+  },
+  "requirements": {
+    "cpu": {
+      "min": 2,
+      "recommended": 4
+    },
+    "memory": {
+      "min": "4G",
+      "recommended": "8G"
+    },
+    "disk": {
+      "min": "10G",
+      "recommended": "20G"
+    }
+  },
+  "documentation": {
+    "endpoints": {
+      "POST /render": "Renderizar video del proyecto default",
+      "POST /render/:projectName": "Renderizar video de un proyecto específico",
+      "GET /projects": "Listar todos los proyectos disponibles",
+      "GET /download/:filename": "Descargar video renderizado"
+    },
+    "example_request": {
+      "method": "POST",
+      "url": "/render",
+      "body": {
+        "variables": {"title": "Mi Video", "fill": "red"},
+        "settings": {"workers": 8}
+      }
+    }
+  }
+}

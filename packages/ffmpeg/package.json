@@ -1,0 +1,30 @@
+{
+  "name": "@revideo/ffmpeg",
+  "version": "0.10.4",
+  "description": "Ffmpeg utilities for revideo",
+  "main": "dist/index.js",
+  "author": "revideo",
+  "homepage": "https://re.video/",
+  "bugs": "https://github.com/havenhq/revideo/issues",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.0.0",
+    "@revideo/core": "0.10.4",
+    "@revideo/telemetry": "0.10.4",
+    "fluent-ffmpeg": "^2.1.2",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/ffprobe-static": "^2.0.3",
+    "@types/fluent-ffmpeg": "^2.1.21",
+    "@types/uuid": "^10.0.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@revideo/e2e",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@revideo/2d": "*",
+    "@revideo/core": "*",
+    "@revideo/ffmpeg": "*",
+    "jest-image-snapshot": "^6.2.0",
+    "puppeteer": "^23.4.0"
+  },
+  "devDependencies": {
+    "@revideo/ui": "*",
+    "@revideo/vite-plugin": "*"
+  }
+}
