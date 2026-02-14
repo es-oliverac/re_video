@@ -103,6 +103,13 @@ RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && echo '{"name":"@ffmpeg-installer/linux-x64","version":"4.1.0","main":"index.js","os":["linux"],"cpu":["x64"]}' > /app/node_modules/@ffmpeg-installer/linux-x64/package.json \
     && echo 'module.exports = { path: require("path").join(__dirname, "ffmpeg"), version: "7.0", url: "local" };' > /app/node_modules/@ffmpeg-installer/linux-x64/index.js
 
+# Crear ffprobe binary para @ffprobe-installer/linux-x64
+RUN mkdir -p /app/node_modules/@ffprobe-installer/linux-x64 \
+    && cp /opt/ffmpeg/bin/ffprobe /app/node_modules/@ffprobe-installer/linux-x64/ffprobe \
+    && chmod +x /app/node_modules/@ffprobe-installer/linux-x64/ffprobe \
+    && echo '{"name":"@ffprobe-installer/linux-x64","version":"2.1.0","main":"index.js","os":["linux"],"cpu":["x64"]}' > /app/node_modules/@ffprobe-installer/linux-x64/package.json \
+    && echo 'module.exports = require("path").join(__dirname, "ffprobe");' > /app/node_modules/@ffprobe-installer/linux-x64/index.js
+
 # Crear directorios necesarios
 RUN mkdir -p /app/projects /app/output
 
