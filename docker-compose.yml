@@ -20,8 +20,6 @@ services:
       - ./projects:/app/projects
       # Montar directorio de salida
       - ./output:/app/output
-      # Volumen para cache de compilación
-      - node_modules:/app/node_modules
     deploy:
       resources:
         limits:
@@ -39,9 +37,6 @@ services:
       start_period: 40s
     networks:
       - revideo-network
-
-volumes:
-  node_modules:
 
 networks:
   revideo-network:
