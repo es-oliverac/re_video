@@ -99,9 +99,8 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/lerna.json ./
 
-# Symlink para @ffmpeg-installer (después de copiar node_modules del builder)
+# Crear ffmpeg binary para @ffmpeg-installer DESPUÉS de copiar node_modules
 RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
-    && rm -f /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
     && cp /opt/ffmpeg/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
     && chmod +x /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
 
@@ -118,4 +117,4 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV DISABLE_TELEMETRY=true
 
 # Iniciar servidor
-CMD ["sh", "-c", "ls -la /app/node_modules/@ffmpeg-installer/ && ls -la /app/node_modules/@ffmpeg-installer/linux-x64/ && file /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg && /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg -version && echo '---' && cat /app/node_modules/@ffmpeg-installer/ffmpeg/index.js | head -50 && echo '---DONE---'"]
+CMD ["node", "packages/cli/dist/index.js", "serve", "--projectFile", "/app/projects/default/src/project.ts", "--port", "4000"]
