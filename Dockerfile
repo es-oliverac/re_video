@@ -118,6 +118,4 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV DISABLE_TELEMETRY=true
 
 # Iniciar servidor
-CMD ["node", "packages/cli/dist/index.js", "serve", \
-     "--projectFile", "/app/projects/default/src/project.ts", \
-     "--port", "4000"]
+CMD ["sh", "-c", "ls -la /app/node_modules/@ffmpeg-installer/ && ls -la /app/node_modules/@ffmpeg-installer/linux-x64/ && file /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg && /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg -version && echo '---' && cat /app/node_modules/@ffmpeg-installer/ffmpeg/index.js | head -50 && echo '---DONE---'"]
