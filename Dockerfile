@@ -16,6 +16,10 @@ RUN wget -O /tmp/ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/do
     && ln -s /opt/ffmpeg/bin/ffprobe /usr/local/bin/ffprobe \
     && rm /tmp/ffmpeg.tar.xz
 
+# Symlink para @ffmpeg-installer
+RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
+    && ln -s /usr/local/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
+
 # Instalar dependencias de Puppeteer/Chromium
 RUN apt-get update && apt-get install -y \
     ca-certificates \
@@ -76,6 +80,10 @@ COPY packages packages
 
 # Instalar dependencias
 RUN npm ci
+
+# Symlink para @ffmpeg-installer (después de npm ci)
+RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
+    && ln -s /usr/local/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
 
 # Construir todos los paquetes
 RUN npx lerna run build
