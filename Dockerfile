@@ -57,11 +57,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Chromium
-RUN wget -O /tmp/chromium.deb https://launchpad.net/~chromium-team/+archive/ubuntu/stable/+files/chromium-browser_115.0.5790.102-0ubuntu0.22.04.1_amd64.deb \
-    && apt-get update \
-    && apt-get install -y /tmp/chromium.deb \
-    && rm /tmp/chromium.deb \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y chromium \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/chromium /usr/bin/chromium-browser
 
 # Stage de construcción
 FROM base AS builder
