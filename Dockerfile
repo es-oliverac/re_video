@@ -33,10 +33,26 @@ RUN cat > /tmp/patch.js << 'EOFPATCH'
 const fs = require('fs');
 const p = '/app/packages/renderer/server/render-video.ts';
 let c = fs.readFileSync(p, 'utf8');
-c = c.replace("args.includes('--single-process') || args.push('--single-process');", "args.includes('--no-sandbox') || args.push('--no-sandbox');\n  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');");
+// Reemplazar la línea problemática
+if (c.includes("args.includes('--single-process') || args.push('--single-process');")) {
+  c = c.replace(
+    "args.includes('--single-process') || args.push('--single-process');",
+    "args.includes('--no-sandbox') || args.push('--no-sandbox');\n  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');"
+  );
+  console.log('Patch applied successfully');
+} else {
+  console.log('Pattern not found, checking if already patched...');
+  if (c.includes('--no-sandbox')) {
+    console.log('Already patched');
+  } else {
+    console.log('ERROR: Pattern not found and not patched!');
+    process.exit(1);
+  }
+}
 fs.writeFileSync(p, c);
+console.log('File saved');
 EOFPATCH
-RUN node /tmp/patch.js
+RUN node /tmp/patch.js && cat /app/packages/renderer/server/render-video.ts | grep -A2 "settings.puppeteer"
 
 RUN npx lerna run build
 
