@@ -29,7 +29,14 @@ RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && ln -s /usr/local/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
 
 # Parchear TypeScript antes de compilar - agregar Puppeteer args
-RUN node -e "const fs=require('fs');const p='/app/packages/renderer/server/render-video.ts';let c=fs.readFileSync(p,'utf8');c=c.replace(\"args.includes('--single-process') || args.push('--single-process');\",\"args.includes('--no-sandbox') || args.push('--no-sandbox');\\n  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');\");fs.writeFileSync(p,c);}"
+RUN cat > /tmp/patch.js << 'EOFPATCH'
+const fs = require('fs');
+const p = '/app/packages/renderer/server/render-video.ts';
+let c = fs.readFileSync(p, 'utf8');
+c = c.replace("args.includes('--single-process') || args.push('--single-process');", "args.includes('--no-sandbox') || args.push('--no-sandbox');\n  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');");
+fs.writeFileSync(p, c);
+EOFPATCH
+RUN node /tmp/patch.js
 
 RUN npx lerna run build
 
