@@ -107,7 +107,8 @@ RUN node -e " \
   require('fs').writeFileSync('/app/packages/core/package.json', JSON.stringify(pkg, null, 2)); \
 "
 
-# Parchear settings.puppeteer?.args para Puppeteer
+RUN node -e "const fs=require('fs');const path='/app/packages/cli/dist/server/render-video.js';let content=fs.readFileSync(path,'utf8');const search="settings.puppeteer?.args";const index=content.indexOf(search);if(index!==-1){const argsIndex=content.indexOf('args??',index);if(argsIndex!==-1){const endIndex=content.indexOf('
+',argsIndex);content=content.substring(0,argsIndex)+"args??['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage']"+content.substring(endIndex);fs.writeFileSync(path,content);}}"
 RUN node -e " \
   const args = []; \
   args.push('--no-sandbox'); \
