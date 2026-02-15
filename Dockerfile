@@ -59,7 +59,7 @@ RUN node -e "var p=require('/app/packages/2d/package.json');p.exports={'.':'./li
 RUN node -e "var p=require('/app/packages/core/package.json');p.exports={'.':'./lib/index.js','./*':'./lib/*.js'};require('fs').writeFileSync('/app/packages/core/package.json',JSON.stringify(p,null,2))"
 
 # Parchear Puppeteer --no-sandbox en renderer
-RUN sed -i "s|args.includes('--single-process') || args.push('--single-process');|args.includes('--single-process') || args.push('--single-process'); args.includes('--no-sandbox') || args.push('--no-sandbox'); args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');|" /app/packages/renderer/lib/server/render-video.js
+RUN sed -i "s#args.includes('--single-process') || args.push('--single-process');#args.includes('--single-process') || args.push('--single-process'); args.includes('--no-sandbox') || args.push('--no-sandbox'); args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');#" /app/packages/renderer/lib/server/render-video.js
 
 RUN mkdir -p /app/projects /app/output
 
