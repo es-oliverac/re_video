@@ -28,32 +28,6 @@ RUN npm ci
 RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && ln -s /usr/local/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
 
-# Parchear TypeScript antes de compilar - agregar Puppeteer args
-RUN cat > /tmp/patch.js << 'EOFPATCH'
-const fs = require('fs');
-const p = '/app/packages/renderer/server/render-video.ts';
-let c = fs.readFileSync(p, 'utf8');
-// Reemplazar la línea problemática
-if (c.includes("args.includes('--single-process') || args.push('--single-process');")) {
-  c = c.replace(
-    "args.includes('--single-process') || args.push('--single-process');",
-    "args.includes('--no-sandbox') || args.push('--no-sandbox');\n  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');"
-  );
-  console.log('Patch applied successfully');
-} else {
-  console.log('Pattern not found, checking if already patched...');
-  if (c.includes('--no-sandbox')) {
-    console.log('Already patched');
-  } else {
-    console.log('ERROR: Pattern not found and not patched!');
-    process.exit(1);
-  }
-}
-fs.writeFileSync(p, c);
-console.log('File saved');
-EOFPATCH
-RUN node /tmp/patch.js && cat /app/packages/renderer/server/render-video.ts | grep -A2 "settings.puppeteer"
-
 RUN npx lerna run build
 
 FROM base AS final
@@ -84,9 +58,6 @@ RUN node -e "var p=require('/app/packages/2d/package.json');p.exports={'.':'./li
 
 # Parchear @revideo/core exports
 RUN node -e "var p=require('/app/packages/core/package.json');p.exports={'.':'./lib/index.js','./*':'./lib/*.js'};require('fs').writeFileSync('/app/packages/core/package.json',JSON.stringify(p,null,2))"
-
-# Parchear Puppeteer args en JavaScript compilado
-RUN node -e "const fs=require('fs');const p='/app/packages/renderer/lib/server/render-video.js';let c=fs.readFileSync(p,'utf8');if(c.includes(\"--single-process\")){c=c.replace(/args\.includes\('--single-process'\) \|\| args\.push\('--single-process'\);/g,'');c=c.replace(/const args = settings\.puppeteer\?\.args \?\? \[\];/,'const args = settings.puppeteer?.args ?? [];\\n  args.includes(\\'--no-sandbox\\') || args.push(\\'--no-sandbox\\');\\n  args.includes(\\'--disable-setuid-sandbox\\') || args.push(\\'--disable-setuid-sandbox\\');');}else if(!c.includes('--no-sandbox')){c=c.replace(/const args = settings\.puppeteer\?\.args \?\? \[\];/,'const args = settings.puppeteer?.args ?? [];\\n  args.includes(\\'--no-sandbox\\') || args.push(\\'--no-sandbox\\');\\n  args.includes(\\'--disable-setuid-sandbox\\') || args.push(\\'--disable-setuid-sandbox\\');');}fs.writeFileSync(p,c);"
 
 RUN mkdir -p /app/projects /app/output
 
