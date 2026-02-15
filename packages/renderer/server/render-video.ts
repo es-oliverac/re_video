@@ -85,7 +85,9 @@ async function initBrowserAndServer(
   variables?: Record<string, unknown>,
 ) {
   const args = settings.puppeteer?.args ?? [];
-  args.includes('--single-process') || args.push('--single-process');
+  args.includes('--no-sandbox') || args.push('--no-sandbox');
+  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');
+  args.includes('--disable-dev-shm-usage') || args.push('--disable-dev-shm-usage');
 
   const resolvedProjectPath = path.join(process.cwd(), projectFile);
   const [browser, server] = await Promise.all([
