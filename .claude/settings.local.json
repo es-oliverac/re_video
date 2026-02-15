@@ -15,7 +15,12 @@
       "Bash(set:*)",
       "Bash(git remote remove:*)",
       "Bash(gh auth login:*)",
-      "Bash(gh repo create:*)"
+      "Bash(gh repo create:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(test:*)",
+      "Bash(docker exec:*)"
     ]
   }
 }

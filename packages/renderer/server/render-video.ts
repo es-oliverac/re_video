@@ -85,9 +85,15 @@ async function initBrowserAndServer(
   variables?: Record<string, unknown>,
 ) {
   const args = settings.puppeteer?.args ?? [];
-  args.includes('--no-sandbox') || args.push('--no-sandbox');
-  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');
-  args.includes('--disable-dev-shm-usage') || args.push('--disable-dev-shm-usage');
+  const dockerArgs = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
+    '--disable-gpu',
+    '--window-size=1920x1080',
+  ];
+  dockerArgs.forEach(arg => args.includes(arg) || args.push(arg));
 
   const resolvedProjectPath = path.join(process.cwd(), projectFile);
   const [browser, server] = await Promise.all([

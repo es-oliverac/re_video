@@ -65,7 +65,7 @@ EXPOSE 4000
 
 ENV NODE_ENV=production
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_LAUNCH_ARGS="--no-sandbox --disable-setuid-sandbox"
 ENV CHROMIUM_FLAGS="--no-sandbox --disable-setuid-sandbox"
 ENV DISABLE_TELEMETRY=true
