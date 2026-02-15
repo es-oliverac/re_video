@@ -95,7 +95,27 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/lerna.json ./
 
-# Parchear package.json de @revideo/core con exports
+# Parchear package.json de @revideo/core con exports y arreglar directory imports
+RUN node -e " \
+  const pkg = require('/app/packages/core/package.json'); \
+  pkg.exports = { \
+    '.': { 'import': './lib/index.js', 'require': './lib/index.js', 'default': './lib/index.js' }, \
+    './jsx-runtime': { 'import': './lib/jsx-runtime.js', 'require': './lib/jsx-runtime.js', 'default': './lib/jsx-runtime.js' }, \
+    './jsx-dev-runtime': { 'import': './lib/jsx-dev-runtime.js', 'require': './lib/jsx-dev-runtime.js', 'default': './lib/jsx-dev-runtime.js' }, \
+    './*': { 'import': './lib/*.js', 'require': './lib/*.js' } \
+  }; \
+  require('fs').writeFileSync('/app/packages/core/package.json', JSON.stringify(pkg, null, 2)); \
+"
+
+# Parchear settings.puppeteer?.args para Puppeteer
+RUN node -e " \
+  const args = []; \
+  args.push('--no-sandbox'); \
+  require('fs').writeFileSync('/app/packages/cli/dist/assets/puppeteer_args.json', JSON.stringify(args)); \
+"
+RUN sed -i "s/args.includes('--single-process') || args.push('--single-process');/args.includes('--single-process') || args.push('--single-process');/args.includes('--no-sandbox') || args.push('--no-sandbox'); args.includes('--no-sandbox') || args.push('--no-sandbox');/;" settings.puppeteer?.args || "" | head -1 > /tmp/puppeteer_args.tmp && mv /tmp/puppeteer_args.tmp /app/packages/cli/dist/assets/puppeteer_args.json
+
+# Crear ffmpeg binary para @ffmpeg-installer DESPUÉS de copiar node_modules
 RUN node -e " \
   const pkg = require('/app/packages/core/package.json'); \
   pkg.exports = { \
