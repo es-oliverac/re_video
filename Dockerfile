@@ -99,6 +99,18 @@ COPY --from=builder /app/lerna.json ./
 RUN ln -sf /app/packages/2d /app/node_modules/@revideo/2d \
     && ln -sf /app/packages/core /app/node_modules/@revideo/core
 
+# Parchear package.json de @revideo/core con exports
+RUN node -e " \
+  const pkg = require('/app/packages/core/package.json'); \
+  pkg.exports = { \
+    '.': { 'import': './lib/index.js', 'require': './lib/index.js', 'default': './lib/index.js' }, \
+    './jsx-runtime': { 'import': './lib/jsx-runtime.js', 'require': './lib/jsx-runtime.js', 'default': './lib/jsx-runtime.js' }, \
+    './jsx-dev-runtime': { 'import': './lib/jsx-dev-runtime.js', 'require': './lib/jsx-dev-runtime.js', 'default': './lib/jsx-dev-runtime.js' }, \
+    './*': { 'import': './lib/*.js', 'require': './lib/*.js' } \
+  }; \
+  require('fs').writeFileSync('/app/packages/core/package.json', JSON.stringify(pkg, null, 2)); \
+"
+
 # Crear ffmpeg binary para @ffmpeg-installer DESPUÉS de copiar node_modules
 RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && rm -f /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
