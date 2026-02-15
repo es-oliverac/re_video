@@ -85,6 +85,9 @@ RUN node -e "var p=require('/app/packages/2d/package.json');p.exports={'.':'./li
 # Parchear @revideo/core exports
 RUN node -e "var p=require('/app/packages/core/package.json');p.exports={'.':'./lib/index.js','./*':'./lib/*.js'};require('fs').writeFileSync('/app/packages/core/package.json',JSON.stringify(p,null,2))"
 
+# Parchear Puppeteer args en JavaScript compilado
+RUN node -e "const fs=require('fs');const p='/app/packages/renderer/lib/server/render-video.js';let c=fs.readFileSync(p,'utf8');if(c.includes(\"--single-process\")){c=c.replace(/args\.includes\('--single-process'\) \|\| args\.push\('--single-process'\);/g,'');c=c.replace(/const args = settings\.puppeteer\?\.args \?\? \[\];/,'const args = settings.puppeteer?.args ?? [];\\n  args.includes(\\'--no-sandbox\\') || args.push(\\'--no-sandbox\\');\\n  args.includes(\\'--disable-setuid-sandbox\\') || args.push(\\'--disable-setuid-sandbox\\');');}else if(!c.includes('--no-sandbox')){c=c.replace(/const args = settings\.puppeteer\?\.args \?\? \[\];/,'const args = settings.puppeteer?.args ?? [];\\n  args.includes(\\'--no-sandbox\\') || args.push(\\'--no-sandbox\\');\\n  args.includes(\\'--disable-setuid-sandbox\\') || args.push(\\'--disable-setuid-sandbox\\');');}fs.writeFileSync(p,c);"
+
 RUN mkdir -p /app/projects /app/output
 
 EXPOSE 4000
