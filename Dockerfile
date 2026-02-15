@@ -27,6 +27,10 @@ COPY packages packages
 RUN npm ci
 RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && ln -s /usr/local/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
+
+# Parchear TypeScript antes de compilar - agregar Puppeteer args
+RUN node -e "const fs=require('fs');const p='/app/packages/renderer/server/render-video.ts';let c=fs.readFileSync(p,'utf8');c=c.replace(/const args = settings\.puppeteer\?\.args \?\? \[\];/,'const args = settings.puppeteer?.args ?? [];\\n  args.includes(\\'--no-sandbox\\') || args.push(\\'--no-sandbox\\');\\n  args.includes(\\'--disable-setuid-sandbox\\') || args.push(\\'--disable-setuid-sandbox\\');\\n  args.includes(\\'--disable-dev-shm-usage\\') || args.push(\\'--disable-dev-shm-usage\\');');fs.writeFileSync(p,c);"
+
 RUN npx lerna run build
 
 FROM base AS final
@@ -57,9 +61,6 @@ RUN node -e "var p=require('/app/packages/2d/package.json');p.exports={'.':'./li
 
 # Parchear @revideo/core exports
 RUN node -e "var p=require('/app/packages/core/package.json');p.exports={'.':'./lib/index.js','./*':'./lib/*.js'};require('fs').writeFileSync('/app/packages/core/package.json',JSON.stringify(p,null,2))"
-
-# Parchear Puppeteer --no-sandbox en renderer
-RUN node -e "const fs=require('fs');const p='/app/packages/renderer/lib/server/render-video.js';let c=fs.readFileSync(p,'utf8');const idx=c.indexOf('const args = settings.puppeteer?.args ??');if(idx!==-1){const end=c.indexOf('\\n',idx);c=c.substring(0,idx)+\"const args = settings.puppeteer?.args ?? [];\\n  args.includes('--no-sandbox') || args.push('--no-sandbox');\\n  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');\\n  \"+c.substring(end);fs.writeFileSync(p,c);}"
 
 RUN mkdir -p /app/projects /app/output
 
