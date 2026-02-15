@@ -95,10 +95,6 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/lerna.json ./
 
-# Symlinks para que el proyecto resuelva los paquetes del monorepo
-RUN ln -sf /app/packages/2d /app/node_modules/@revideo/2d \
-    && ln -sf /app/packages/core /app/node_modules/@revideo/core
-
 # Parchear package.json de @revideo/core con exports
 RUN node -e " \
   const pkg = require('/app/packages/core/package.json'); \
