@@ -1,14 +1,7 @@
-# Multi-stage build para optimizar tamaño de imagen
 FROM node:20-bullseye-slim AS base
 
-# Instalar dependencias del sistema para FFmpeg
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    xz-utils \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y wget gnupg xz-utils && rm -rf /var/lib/apt/lists/*
 
-# Instalar FFmpeg estático
 RUN wget -O /tmp/ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz \
     && mkdir -p /opt/ffmpeg \
     && tar -xf /tmp/ffmpeg.tar.xz -C /opt/ffmpeg --strip-components=1 \
@@ -16,119 +9,35 @@ RUN wget -O /tmp/ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/do
     && ln -s /opt/ffmpeg/bin/ffprobe /usr/local/bin/ffprobe \
     && rm /tmp/ffmpeg.tar.xz
 
-# Instalar dependencias de Puppeteer/Chromium
 RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libc6 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libexpat1 \
-    libfontconfig1 \
-    libgbm1 \
-    libgcc1 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libstdc++6 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    lsb-release \
-    wget \
-    xdg-utils \
-    && rm -rf /var/lib/apt/lists/*
-
-# Instalar Chromium
-RUN apt-get update \
-    && apt-get install -y chromium \
+    ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 libatk1.0-0 \
+    libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 \
+    libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 \
+    libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 \
+    libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
+    libxss1 libxtst6 lsb-release xdg-utils chromium \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/chromium /usr/bin/chromium-browser
 
-# Stage de construcción
 FROM base AS builder
-
 WORKDIR /app
-
-# Copiar archivos de configuración de paquetes
 COPY package*.json ./
 COPY lerna.json ./
-
-# Copiar paquetes individuales
 COPY packages packages
-
-# Instalar dependencias
 RUN npm ci
-
-# Symlink para @ffmpeg-installer (después de npm ci)
 RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && ln -s /usr/local/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
-
-# Construir todos los paquetes
 RUN npx lerna run build
 
-# Stage final - imagen de producción
 FROM base AS final
-
 WORKDIR /app
 
-# Copiar desde builder
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/lerna.json ./
 
-# Parchear package.json de @revideo/core con exports y arreglar directory imports
-RUN node -e " \
-  const pkg = require('/app/packages/core/package.json'); \
-  pkg.exports = { \
-    '.': { 'import': './lib/index.js', 'require': './lib/index.js', 'default': './lib/index.js' }, \
-    './jsx-runtime': { 'import': './lib/jsx-runtime.js', 'require': './lib/jsx-runtime.js', 'default': './lib/jsx-runtime.js' }, \
-    './jsx-dev-runtime': { 'import': './lib/jsx-dev-runtime.js', 'require': './lib/jsx-dev-runtime.js', 'default': './lib/jsx-dev-runtime.js' }, \
-    './*': { 'import': './lib/*.js', 'require': './lib/*.js' } \
-  }; \
-  require('fs').writeFileSync('/app/packages/core/package.json', JSON.stringify(pkg, null, 2)); \
-"
-
-RUN node -e "const fs=require('fs');const path='/app/packages/cli/dist/server/render-video.js';let content=fs.readFileSync(path,'utf8');const search="settings.puppeteer?.args";const index=content.indexOf(search);if(index!==-1){const argsIndex=content.indexOf('args??',index);if(argsIndex!==-1){const endIndex=content.indexOf('
-',argsIndex);content=content.substring(0,argsIndex)+"args??['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage']"+content.substring(endIndex);fs.writeFileSync(path,content);}}"
-RUN node -e " \
-  const args = []; \
-  args.push('--no-sandbox'); \
-  require('fs').writeFileSync('/app/packages/cli/dist/assets/puppeteer_args.json', JSON.stringify(args)); \
-"
-RUN sed -i "s/args.includes('--single-process') || args.push('--single-process');/args.includes('--single-process') || args.push('--single-process');/args.includes('--no-sandbox') || args.push('--no-sandbox'); args.includes('--no-sandbox') || args.push('--no-sandbox');/;" settings.puppeteer?.args || "" | head -1 > /tmp/puppeteer_args.tmp && mv /tmp/puppeteer_args.tmp /app/packages/cli/dist/assets/puppeteer_args.json
-
-# Crear ffmpeg binary para @ffmpeg-installer DESPUÉS de copiar node_modules
-RUN node -e " \
-  const pkg = require('/app/packages/core/package.json'); \
-  pkg.exports = { \
-    '.': { 'import': './lib/index.js', 'require': './lib/index.js', 'default': './lib/index.js' }, \
-    './jsx-runtime': { 'import': './lib/jsx-runtime.js', 'require': './lib/jsx-runtime.js', 'default': './lib/jsx-runtime.js' }, \
-    './jsx-dev-runtime': { 'import': './lib/jsx-dev-runtime.js', 'require': './lib/jsx-dev-runtime.js', 'default': './lib/jsx-dev-runtime.js' }, \
-    './*': { 'import': './lib/*.js', 'require': './lib/*.js' } \
-  }; \
-  require('fs').writeFileSync('/app/packages/core/package.json', JSON.stringify(pkg, null, 2)); \
-"
-
-# Crear ffmpeg binary para @ffmpeg-installer DESPUÉS de copiar node_modules
+# Parchear @ffmpeg-installer/linux-x64
 RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && rm -f /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
     && cp /opt/ffmpeg/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg \
@@ -136,48 +45,31 @@ RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && echo '{"name":"@ffmpeg-installer/linux-x64","version":"4.1.0","main":"index.js","os":["linux"],"cpu":["x64"]}' > /app/node_modules/@ffmpeg-installer/linux-x64/package.json \
     && echo 'module.exports = { path: require("path").join(__dirname, "ffmpeg"), version: "7.0", url: "local" };' > /app/node_modules/@ffmpeg-installer/linux-x64/index.js
 
-# Crear ffprobe binary para @ffprobe-installer/linux-x64
+# Parchear @ffprobe-installer/linux-x64
 RUN mkdir -p /app/node_modules/@ffprobe-installer/linux-x64 \
     && cp /opt/ffmpeg/bin/ffprobe /app/node_modules/@ffprobe-installer/linux-x64/ffprobe \
     && chmod +x /app/node_modules/@ffprobe-installer/linux-x64/ffprobe \
     && echo '{"name":"@ffprobe-installer/linux-x64","version":"2.1.0","main":"index.js","os":["linux"],"cpu":["x64"]}' > /app/node_modules/@ffprobe-installer/linux-x64/package.json \
     && echo 'module.exports = require("path").join(__dirname, "ffprobe");' > /app/node_modules/@ffprobe-installer/linux-x64/index.js
 
-# Parchear package.json de @revideo/2d con exports
-RUN node -e " \
-  const pkg = require('/app/packages/2d/package.json'); \
-  pkg.exports = { \
-    '.': { 'import': './lib/index.js', 'require': './lib/index.js', 'default': './lib/index.js' }, \
-    './jsx-runtime': { 'import': './lib/jsx-runtime.js', 'require': './lib/jsx-runtime.js', 'default': './lib/jsx-runtime.js' }, \
-    './jsx-dev-runtime': { 'import': './lib/jsx-dev-runtime.js', 'require': './lib/jsx-dev-runtime.js', 'default': './lib/jsx-dev-runtime.js' }, \
-    './*': { 'import': './lib/*.js', 'require': './lib/*.js' } \
-  }; \
-  require('fs').writeFileSync('/app/packages/2d/package.json', JSON.stringify(pkg, null, 2)); \
-"
+# Parchear @revideo/2d exports
+RUN node -e "var p=require('/app/packages/2d/package.json');p.exports={'.':'./lib/index.js','./jsx-runtime':'./lib/jsx-runtime.js','./jsx-dev-runtime':'./lib/jsx-dev-runtime.js','./*':'./lib/*.js'};require('fs').writeFileSync('/app/packages/2d/package.json',JSON.stringify(p,null,2))"
 
-# Crear jsx-runtime export para @revideo/2d
-RUN if [ -f /app/packages/2d/lib/jsx-runtime.js ]; then \
-      echo "jsx-runtime already compiled"; \
-    else \
-      echo "jsx-runtime not found in lib, checking src..."; \
-      ls -la /app/packages/2d/lib/ 2>/dev/null || echo "lib/ does not exist"; \
-      ls -la /app/packages/2d/src/lib/jsx-runtime* 2>/dev/null || echo "src jsx-runtime not found"; \
-    fi
+# Parchear @revideo/core exports
+RUN node -e "var p=require('/app/packages/core/package.json');p.exports={'.':'./lib/index.js','./*':'./lib/*.js'};require('fs').writeFileSync('/app/packages/core/package.json',JSON.stringify(p,null,2))"
 
-# Crear directorios necesarios
+# Parchear Puppeteer --no-sandbox en renderer
+RUN sed -i "s|args.includes('--single-process') || args.push('--single-process');|args.includes('--single-process') || args.push('--single-process'); args.includes('--no-sandbox') || args.push('--no-sandbox'); args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');|" /app/packages/renderer/lib/server/render-video.js
+
 RUN mkdir -p /app/projects /app/output
 
-# Puerto del servidor
 EXPOSE 4000
 
-# Variables de entorno
 ENV NODE_ENV=production
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV PUPPETEER_LAUNCH_ARGS="--no-sandbox --disable-setuid-sandbox"
-ENV PUPPETEER_CHROMIUM_ARGS="--no-sandbox --disable-setuid-sandbox"
 ENV CHROMIUM_FLAGS="--no-sandbox --disable-setuid-sandbox"
 ENV DISABLE_TELEMETRY=true
 
-# Iniciar servidor
 CMD ["node", "packages/cli/dist/index.js", "serve", "--projectFile", "/app/projects/default/src/project.ts", "--port", "4000"]
