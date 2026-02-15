@@ -29,7 +29,7 @@ RUN mkdir -p /app/node_modules/@ffmpeg-installer/linux-x64 \
     && ln -s /usr/local/bin/ffmpeg /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg
 
 # Parchear TypeScript antes de compilar - agregar Puppeteer args
-RUN node -e "const fs=require('fs');const p='/app/packages/renderer/server/render-video.ts';let c=fs.readFileSync(p,'utf8');const idx=c.indexOf('const args = settings.puppeteer?.args ?? []');if(idx!==-1){c=c.substring(0,idx+48)+\"\\n  args.includes('--no-sandbox') || args.push('--no-sandbox');\\n  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');\\n  args.includes('--disable-dev-shm-usage') || args.push('--disable-dev-shm-usage');\"+c.substring(idx+48);fs.writeFileSync(p,c);}"
+RUN node -e "const fs=require('fs');const p='/app/packages/renderer/server/render-video.ts';let c=fs.readFileSync(p,'utf8');c=c.replace(\"args.includes('--single-process') || args.push('--single-process');\",\"args.includes('--no-sandbox') || args.push('--no-sandbox');\\n  args.includes('--disable-setuid-sandbox') || args.push('--disable-setuid-sandbox');\");fs.writeFileSync(p,c);}"
 
 RUN npx lerna run build
 
