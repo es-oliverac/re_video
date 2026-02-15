@@ -91,7 +91,11 @@ async function initBrowserAndServer(
 
   const resolvedProjectPath = path.join(process.cwd(), projectFile);
   const [browser, server] = await Promise.all([
-    puppeteer.launch({headless: true, ...settings.puppeteer, args}),
+    puppeteer.launch({
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
+      args,
+    }),
     createServer({
       configFile: false,
       plugins: [
